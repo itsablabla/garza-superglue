@@ -1,21 +1,22 @@
 import {
   BatchFileUploadRequest,
   BatchFileUploadResponse,
+  ConversationRecord,
   DiscoveryRun,
   DiscoverySource,
   FileReference,
   NotificationRule,
   SlackAuthType,
   StoredRunResults,
-  SuperglueClient,
+  GarzaGlueClient,
   Tool,
   ToolSchedule,
-} from "@superglue/shared";
-import type { Role, OrgMember, OrgInvitation } from "@superglue/shared";
+} from "@garzaglue/shared";
+import type { Role, OrgMember, OrgInvitation } from "@garzaglue/shared";
 import { tokenRegistry } from "./token-registry";
 import { connectionMonitor } from "./connection-monitor";
 
-export class EESuperglueClient extends SuperglueClient {
+export class EEGarzaGlueClient extends GarzaGlueClient {
   async batchCreateFileReferences(
     files: BatchFileUploadRequest["files"],
   ): Promise<BatchFileUploadResponse> {
@@ -455,6 +456,51 @@ export class EESuperglueClient extends SuperglueClient {
   }): Promise<{ success: boolean }> {
     return this.restRequest("POST", "/v1/internal/assignOrgRole", { userId, orgId, roleId });
   }
+
+  // Conversation Management
+  async listConversations(
+    limit: number = 50,
+    page: number = 1,
+  ): Promise<{ data: ConversationRecord[]; total: number; hasMore: boolean }> {
+    return this.restRequest<{ data: ConversationRecord[]; total: number; hasMore: boolean }>(
+      "GET",
+      `/v1/conversations?limit=${limit}&page=${page}`,
+    );
+  }
+
+  async getConversation(id: string): Promise<ConversationRecord> {
+    const response = await this.restRequest<{ data: ConversationRecord }>(
+      "GET",
+      `/v1/conversations/${encodeURIComponent(id)}`,
+    );
+    return response.data;
+  }
+
+  async upsertConversation(
+    id: string,
+    conversation: {
+      title: string;
+      summary?: string;
+      messages: any[];
+      sessionId?: string | null;
+      lastSummarizedMessageCount?: number;
+    },
+  ): Promise<ConversationRecord> {
+    const response = await this.restRequest<{ data: ConversationRecord }>(
+      "PUT",
+      `/v1/conversations/${encodeURIComponent(id)}`,
+      conversation,
+    );
+    return response.data;
+  }
+
+  async deleteConversation(id: string): Promise<boolean> {
+    const response = await this.restRequest<{ success: boolean }>(
+      "DELETE",
+      `/v1/conversations/${encodeURIComponent(id)}`,
+    );
+    return response.success;
+  }
 }
 
 // Response type for notification settings
@@ -495,8 +541,8 @@ export interface ApiKey {
   updatedAt: string;
 }
 
-export function createEESuperglueClient(apiEndpoint: string): EESuperglueClient {
-  return new EESuperglueClient({
+export function createEEGarzaGlueClient(apiEndpoint: string): EEGarzaGlueClient {
+  return new EEGarzaGlueClient({
     apiKey: tokenRegistry.getToken(),
     apiEndpoint,
     onInfrastructureError: () => connectionMonitor.onInfrastructureError(apiEndpoint),

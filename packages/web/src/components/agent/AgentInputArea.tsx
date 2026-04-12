@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/pop
 import { Textarea } from "@/src/components/ui/textarea";
 import { cn } from "@/src/lib/general-utils";
 import { formatBytes } from "@/src/lib/file-utils";
-import { ALLOWED_FILE_EXTENSIONS } from "@superglue/shared";
+import { ALLOWED_FILE_EXTENSIONS } from "@garzaglue/shared";
 import { AlertTriangle, ChevronUp, Paperclip, Send, Square } from "lucide-react";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useAgentContext } from "./AgentContextProvider";
@@ -34,7 +34,7 @@ export function AgentInputArea({
   onSend,
   onStop,
   isLoading,
-  placeholder = "Message superglue...",
+  placeholder = "Message Garza Glue...",
   maxLength = 50000,
   compact = false,
   showCharCount = false,
@@ -85,6 +85,33 @@ export function AgentInputArea({
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, maxH)}px`;
   }, [value, compact]);
+
+  // Mobile keyboard: translate input up when virtual keyboard opens
+  useEffect(() => {
+    if (compact) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const container = inputContainerRef?.current;
+    if (!container) return;
+
+    const handleResize = () => {
+      const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
+      if (keyboardHeight > 50) {
+        container.style.transform = `translateY(-${keyboardHeight}px)`;
+      } else {
+        container.style.transform = "";
+      }
+    };
+
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+      if (container) container.style.transform = "";
+    };
+  }, [compact, inputContainerRef]);
 
   const canSend = value.trim() && value.length <= maxLength;
   const showCount = showCharCount && value.length > maxLength * 0.8;

@@ -12,7 +12,7 @@ import {
   RequestStepConfig,
   isRequestConfig,
   safeStringify,
-} from "@superglue/shared";
+} from "@garzaglue/shared";
 import { MessagesSquare, Pencil, Plus, X } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -44,7 +44,7 @@ import { useExecution } from "../context/tool-execution-context";
 import { useRightSidebar } from "../../sidebar/RightSidebarContext";
 import type { SystemContextForAgent } from "../../systems/context/types";
 import { AccessRulesContext } from "@/src/lib/agent/agent-types";
-import { useSuperglueClient } from "@/src/queries/use-client";
+import { useGarzaGlueClient } from "@/src/queries/use-client";
 
 const MAX_MESSAGE_LENGTH = 50000;
 
@@ -126,7 +126,6 @@ export interface PlaygroundAgentContentProps {
   hideHeader?: boolean;
   mode: PlaygroundMode;
   agentType: AgentType;
-  cacheKeyPrefix: string;
   initializationMessage?: string;
   initializationMarker?: string;
   onApplyChanges?: (newConfig: Tool, diffs?: ToolDiff[]) => void;
@@ -139,7 +138,6 @@ export function PlaygroundAgentContent({
   hideHeader = false,
   mode,
   agentType,
-  cacheKeyPrefix,
   initializationMessage,
   initializationMarker,
   onApplyChanges,
@@ -261,16 +259,16 @@ export function PlaygroundAgentContent({
   const emptyStateText =
     mode === "tool"
       ? {
-          title: "Ask superglue to edit your tool",
+          title: "Ask Garza Glue to edit your tool",
           hint: 'e.g. "Add a filter to step getUsers to retrieve only active users"',
         }
       : mode === "access"
         ? {
-            title: "Ask superglue to configure access rules",
+            title: "Ask Garza Glue to configure access rules",
             hint: 'e.g. "Make this role read-only for Stripe" or "Block all POST requests to the admin API"',
           }
         : {
-            title: "Ask superglue to help with your system",
+            title: "Ask Garza Glue to help with your system",
             hint: 'e.g. "Test my API credentials" or "Help me debug authentication"',
           };
 
@@ -296,7 +294,6 @@ export function PlaygroundAgentContent({
             sessionId={sessionId}
             onConversationLoad={loadConversation}
             onCurrentConversationIdChange={setCurrentConversationId}
-            cacheKeyPrefix={cacheKeyPrefix}
           />
           {(hasVisibleMessages || hideHeader) && (
             <Button variant="glass" size="sm" onClick={startNewConversation} className="h-8 px-2">
@@ -317,11 +314,7 @@ export function PlaygroundAgentContent({
           {!hasVisibleMessages && (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <div className="h-10 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center mb-3">
-                <img
-                  src="/favicon.png"
-                  alt="superglue"
-                  className="w-5 h-5 object-contain dark:invert"
-                />
+                <img src="/favicon.png" alt="Garza Glue" />
               </div>
               <p className="text-sm text-muted-foreground">{emptyStateText.title}</p>
               <p className="text-xs text-muted-foreground/70 mt-2 max-w-[240px]">
@@ -349,15 +342,11 @@ export function PlaygroundAgentContent({
                           Y
                         </span>
                       ) : (
-                        <img
-                          src="/favicon.png"
-                          alt="superglue"
-                          className="w-3 h-3 object-contain dark:invert"
-                        />
+                        <img src="/favicon.png" alt="Garza Glue" />
                       )}
                     </div>
                     <span className="font-medium text-sm">
-                      {message.role === "user" ? "You" : "superglue"}
+                      {message.role === "user" ? "You" : "Garza Glue"}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {formatTimestamp(message.timestamp)}
@@ -498,7 +487,7 @@ export function PlaygroundAgentContent({
           onSend={handleSend}
           onStop={stopStreaming}
           isLoading={isLoading}
-          placeholder="Message superglue..."
+          placeholder="Message Garza Glue..."
           maxLength={MAX_MESSAGE_LENGTH}
           compact
           inputRef={inputRef}
@@ -520,7 +509,7 @@ function ToolPlaygroundAgentSidebar({
 }: Omit<PlaygroundAgentSidebarProps, "mode" | "systemConfig">) {
   const toolConfig = useToolConfig();
   const execution = useExecution();
-  const createClient = useSuperglueClient();
+  const createClient = useGarzaGlueClient();
   const { setSavedTool } = useRightSidebar();
   const toolId = toolConfig.tool.id;
 
@@ -736,7 +725,6 @@ function ToolPlaygroundAgentSidebar({
           hideHeader={hideHeader}
           mode="tool"
           agentType={AgentType.PLAYGROUND}
-          cacheKeyPrefix={`superglue-playground-${toolId}`}
           initializationMessage={initializationMessage}
           initializationMarker={TOOL_PLAYGROUND_INIT_MARKER}
           onApplyChanges={handleApplyChanges}
@@ -785,7 +773,6 @@ function SystemPlaygroundAgentSidebar({
           hideHeader={hideHeader}
           mode="system"
           agentType={AgentType.SYSTEM_PLAYGROUND}
-          cacheKeyPrefix={`superglue-system-${systemConfig.systemId || "new"}`}
           initializationMessage={initializationMessage}
           initializationMarker={SYSTEM_PLAYGROUND_INIT_MARKER}
           currentPlaygroundState={initialError ? { initialError } : undefined}
@@ -829,7 +816,6 @@ function AccessPlaygroundAgentSidebar({
           hideHeader={hideHeader}
           mode="access"
           agentType={AgentType.ACCESS_RULES}
-          cacheKeyPrefix="superglue-access"
           onApplyRoleConfig={onRoleDraftUpdate}
         />
       </AgentContextProvider>

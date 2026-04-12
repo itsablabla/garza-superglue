@@ -22,6 +22,18 @@ import { useToken } from "../hooks/use-token";
 import { queryClient } from "@/src/queries";
 import { useEffect, useState } from "react";
 import { connectionMonitor } from "@/src/lib/connection-monitor";
+import { useIOSScrollLock } from "@/src/hooks/use-ios-scroll-lock";
+import { IOSInstallBanner } from "@/src/components/pwa/IOSInstallBanner";
+
+function useServiceWorker(): void {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // SW registration failed — non-critical, ignore
+      });
+    }
+  }, []);
+}
 
 interface Props {
   children: React.ReactNode;
@@ -124,6 +136,8 @@ export function ClientWrapper({ children, config }: Props) {
   const pathname = usePathname();
   const token = useToken();
   const isWelcomePage = pathname === "/welcome";
+  useIOSScrollLock();
+  useServiceWorker();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -145,7 +159,7 @@ export function ClientWrapper({ children, config }: Props) {
                             <AgentModalContent />
                           </div>
                         ) : (
-                          <div className="flex h-screen overflow-hidden">
+                          <div className="flex h-dvh overflow-hidden overscroll-none">
                             {token && <LeftSidebar />}
                             <div className="relative flex-1 min-w-0 h-full">
                               <AnimatePresence mode="wait">
@@ -172,6 +186,7 @@ export function ClientWrapper({ children, config }: Props) {
                       </WelcomeGate>
                       <Toaster />
                       {token && !isWelcomePage && <ConnectionToast />}
+                      <IOSInstallBanner />
                     </div>
                   </SystemPickerModalProvider>
                 </AgentModalProvider>

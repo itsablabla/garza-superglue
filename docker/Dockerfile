@@ -41,13 +41,15 @@ COPY packages/core/package*.json ./packages/core/
 COPY packages/web/package*.json ./packages/web/
 COPY packages/shared/package*.json ./packages/shared/
 
-# Install system dependencies first
+# Install system dependencies and Deno runtime
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y libxml2 && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        sendmail \
+        sendmail curl unzip \
         fontconfig fontconfig-config libfontconfig1 \
-        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libjpeg62-turbo libgif7 librsvg2-2 libpixman-1-0
+        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libjpeg62-turbo libgif7 librsvg2-2 libpixman-1-0 && \
+    curl -fsSL https://deno.land/install.sh | sh && \
+    ln -s /root/.deno/bin/deno /usr/local/bin/deno
 
 # Install production dependencies and Playwright
 RUN npm ci --omit=dev && \
@@ -62,6 +64,7 @@ RUN npm ci --omit=dev && \
 
 # Copy built files from builder stage
 COPY --from=builder /usr/src/app/packages/core/dist ./packages/core/dist
+COPY --from=builder /usr/src/app/packages/core/deno-runtime ./packages/core/deno-runtime
 COPY --from=builder /usr/src/app/packages/web/.next ./packages/web/.next
 COPY --from=builder /usr/src/app/packages/web/public ./packages/web/public
 COPY --from=builder /usr/src/app/packages/shared/dist ./packages/shared/dist

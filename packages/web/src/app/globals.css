@@ -4,8 +4,14 @@
 
 @source "../../../node_modules/streamdown/dist/index.js";
 
+html {
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   overflow: hidden;
+  overscroll-behavior: none;
   font-family: var(--font-jetbrains-sans);
   scrollbar-gutter: stable both-edges;
 }

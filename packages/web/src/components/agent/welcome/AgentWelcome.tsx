@@ -4,17 +4,17 @@ import { cn } from "@/src/lib/general-utils";
 import { Lightbulb, Play } from "lucide-react";
 import React, { useImperativeHandle, useCallback } from "react";
 import { SystemCarousel } from "@/src/components/ui/rotating-icon-gallery";
-import { SystemConfig } from "@superglue/shared";
+import { SystemConfig } from "@garzaglue/shared";
 
 const EXAMPLES = {
   CAPABILITIES: {
-    title: "What can superglue do for you?",
-    description: "Explain superglue's capabilities",
-    user: "What can I do with superglue?",
+    title: "What can Garza Glue do for you?",
+    description: "Explain Garza Glue's capabilities",
+    user: "What can I do with Garza Glue?",
   },
   TEMPLATES: {
     title: "Give me a demo",
-    description: "Show me what superglue can do",
+    description: "Show me what Garza Glue can do",
     user: "Give me a demo.",
     hiddenStarterMessage:
       "After a brief welcome message, call load_skill with skills ['demos'] and follow it exactly. Narrate each step briefly and map it to real customer systems.",

@@ -5,7 +5,7 @@ import { Textarea } from "@/src/components/ui/textarea";
 import { ThinkingIndicator } from "@/src/components/ui/thinking-indicator";
 import { SystemIcon } from "@/src/components/ui/system-icon";
 import { cn, handleCopyCode } from "@/src/lib/general-utils";
-import { Message, ToolCall } from "@superglue/shared";
+import { Message, ToolCall } from "@garzaglue/shared";
 import { AlertTriangle, ChevronDown, ChevronUp, Pencil, Plus, X } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -120,7 +120,7 @@ const MemoMessage = React.memo(
           {message.role === "assistant" && (
             <img
               src="/favicon.png"
-              alt="superglue"
+              alt="Garza Glue"
               className="w-5 h-5 object-contain dark:invert"
             />
           )}
@@ -129,7 +129,7 @@ const MemoMessage = React.memo(
         <div className="flex-1 space-y-3 min-w-0 overflow-hidden">
           <div className="flex items-center gap-2">
             <span className="font-medium text-base">
-              {message.role === "user" ? "You" : "superglue"}
+              {message.role === "user" ? "You" : "Garza Glue"}
             </span>
             <span className="text-xs text-muted-foreground">
               {formatTimestamp(message.timestamp)}
@@ -497,7 +497,7 @@ function AgentInterfaceContent({
   }, [startNewConversation]);
 
   return (
-    <div className="h-full mx-auto flex flex-col relative">
+    <div className="h-full mx-auto flex flex-col relative overflow-hidden overscroll-none">
       <div className="flex items-center gap-2 p-2 relative">
         <ConversationHistory
           messages={messages}
@@ -534,8 +534,8 @@ function AgentInterfaceContent({
       </div>
 
       <ScrollToBottomContainer
-        className="flex-1 mx-0 sm:mx-2 lg:mx-6 overflow-hidden relative"
-        scrollViewClassName="custom-scrollbar"
+        className="flex-1 mx-0 sm:mx-2 lg:mx-6 overflow-hidden relative overscroll-contain"
+        scrollViewClassName="custom-scrollbar overscroll-contain"
         followButtonClassName="hidden"
         debounce={50}
       >
@@ -581,7 +581,7 @@ function AgentInterfaceContent({
         onSend={onSendMessage}
         onStop={handleStopStreaming}
         isLoading={isLoading}
-        placeholder="Message superglue..."
+        placeholder="Message Garza Glue..."
         maxLength={MAX_MESSAGE_LENGTH}
         showCharCount
         inputContainerRef={inputContainerRef}
