@@ -1,95 +1,177 @@
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/be0e65d4-dcd8-4133-9841-b08799e087e7" width="350" alt="garzaglue_logo_white">
-</p>
+# Garza Glue
 
-<h2 align="center">Build production-grade integrations & tools in natural language.</h2>
-<div align="center">
-  
-[![Y Combinator](https://img.shields.io/badge/Y%20Combinator-W25-orange?style=flat-square)](https://www.ycombinator.com/companies/garzaglue)
-[![Client SDK](https://img.shields.io/npm/v/@garzaglue/client?style=flat-square&logo=npm)](https://www.npmjs.com/package/@garzaglue/client)
-[![Docker](https://img.shields.io/docker/pulls/garzaglueai/garzaglue?style=flat-square&logo=Docker)](https://hub.docker.com/r/garzaglueai/garzaglue)
-[![Weave Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fapp.workweave.ai%2Fapi%2Frepository%2Fbadge%2Forg_0S2o9PLamHvNsTjHbszc38vC%2F914997268&cacheSeconds=3600&labelColor=#EC6341)](https://app.workweave.ai/reports/repository/org_0S2o9PLamHvNsTjHbszc38vC/914997268)
+**AI-powered integration platform for building production-grade tools in natural language.**
 
-</div>
+Garza Glue is a customized enterprise deployment of [superglue](https://github.com/superglue-ai/superglue) with Garza-specific branding, mobile-first PWA support, server-side chat persistence, and additional enterprise pages.
 
-## What is garzaglue?
+---
 
-- Garza Glue is an AI-powered tool builder that works with any API, database or file storage server
-- Abstracts away authentication, documentation handling and data mapping between systems
-- Self‑heals tools: When steps fail due to upstream API changes, garzaglue can auto-repair failures to keep your tools running
+## What's Different from Upstream Superglue
 
-## What people build with garzaglue
+This repo contains all upstream superglue functionality **plus** the following custom features built for Garza:
 
-- Lightweight and maintainable data syncing tools across legacy systems
-- Migrations of complex SQL procedures to REST API calls in cloud migrations
-- Enterprise GPT tools: expose tools that work with custom legacy systems in your enterprise GPT
+### Custom Features
+
+| Feature | Description | Key Files |
+|---------|-------------|-----------|
+| **Garza Glue Branding** | Full rebrand — logo, page titles, chat placeholders, welcome page, agent prompts | `layout.tsx`, `client-layout.tsx`, `welcome/page.tsx`, `logo.svg`, `logo.png` |
+| **Server-Side Chat Persistence** | Conversations stored in Postgres (PUT/GET/DELETE), survive page refreshes | `packages/core/api/ee/conversations.ts`, `packages/core/datastore/postgres.ts` |
+| **PWA Support** | Hand-rolled service worker with BUILD_ID cache versioning, offline fallback, push notifications | `public/sw.js`, `manifest.json`, `offline.html` |
+| **iOS Safari Scroll Lock** | JS `touchmove` interception prevents rubber-banding in PWA standalone mode | `src/hooks/use-ios-scroll-lock.ts` |
+| **iOS Install Banner** | Detects iOS Safari, shows "Add to Home Screen" instructions | `src/components/pwa/IOSInstallBanner.tsx` |
+| **Voice Memos** | Mic button in chat — Web Speech API (Chrome/Edge) + MediaRecorder fallback (Safari/Firefox) | `src/components/agent/AgentInputArea.tsx` |
+| **Mobile Floating Sidebar** | Hamburger menu opens a floating card overlay (not full-height drawer) | `src/components/sidebar/LeftSidebar.tsx` |
+| **iOS Safe Area Insets** | Proper `env(safe-area-inset-*)` padding for notch/Dynamic Island in PWA | `client-layout.tsx`, `layout.tsx` |
+| **Agent Direct Credentials** | Agents can set system credentials directly without user confirmation form | `packages/core/api/systems.ts`, `AuthenticationSection.tsx` |
+| **Runs Page** | Full runs list with search, status filter, pagination + run detail view | `src/app/runs/page.tsx`, `src/app/runs/[id]/page.tsx` |
+| **EE Pages Restored** | Landscape, Control Panel (Overview/Schedules/API Keys), Notifications | `landscape/`, `control-panel/`, `notifications/` |
+| **Deno Runtime in Docker** | Dockerfile includes Deno installation for sandboxed tool execution | `docker/Dockerfile` |
+| **Body Limit Fix** | API body limit set to 50MB (was unlimited, causing memory issues) | `packages/core/api/api-server.ts` |
+| **Default orgId Fix** | Sets `orgId: "default"` for self-hosted deployments (was `""`, disabling all queries) | `layout.tsx` |
+
+### Architecture
+
+```
+garza-superglue/
+├── packages/
+│   ├── core/               # Backend (Fastify + GraphQL + REST API)
+│   │   ├── api/            # REST endpoints
+│   │   │   └── ee/         # Enterprise endpoints (conversations, metrics, etc.)
+│   │   ├── datastore/      # Postgres data layer (with conversation CRUD)
+│   │   ├── scheduler/      # Cron scheduling (EE)
+│   │   ├── notifications/  # Slack/email alerts (EE)
+│   │   └── deno-runtime/   # Sandboxed JS execution
+│   ├── web/                # Next.js 16 frontend (Turbopack)
+│   │   ├── src/app/
+│   │   │   ├── agent/         # AI agent chat (EE)
+│   │   │   ├── runs/          # Runs list + detail pages
+│   │   │   ├── landscape/     # System landscape view
+│   │   │   ├── control-panel/ # Overview, Schedules, API Keys
+│   │   │   └── notifications/ # Notification center
+│   │   ├── public/
+│   │   │   ├── sw.js          # PWA service worker
+│   │   │   ├── manifest.json  # PWA manifest
+│   │   │   ├── offline.html   # Offline fallback page
+│   │   │   └── icon-*.png     # PWA icons
+│   │   └── src/hooks/
+│   │       └── use-ios-scroll-lock.ts  # iOS Safari fix
+│   └── shared/             # Shared types and utilities
+├── docker/
+│   └── Dockerfile          # Production image (Node 22 + Deno)
+└── docker-compose.yml      # Local development stack
+```
+
+---
 
 ## Quick Start
 
-### Option 1: Sign up to [garzaglue](https://app.garzaglue.com) and start building immediately
+### Development
 
-### Option 2: [Self-host](https://docs.garzaglue.com/getting-started/setup#self-hosted) for maximum control and customization
+```bash
+npm install
+npm run dev          # Starts all services (turbo)
+```
 
-## Interfaces
+Ports: **3000** (GraphQL), **3001** (Web), **3002** (REST API)
 
-You can interact with garzaglue via three interfaces, regardless of whether you self-host or use the hosted version:
+### Docker (Production)
 
-**Web application**
+```bash
+docker build -f docker/Dockerfile -t garza-glue:latest .
+docker run -p 3000:3000 -p 3001:3001 \
+  -e DATABASE_URL=postgresql://... \
+  -e MASTER_ENCRYPTION_KEY=... \
+  -e ENCRYPTION_KEY=... \
+  -e AUTH_TOKEN=... \
+  garza-glue:latest
+```
 
-- The web application is available for self-hosted and garzaglue-hosted setups
-- If you decide to use a garzaglue-hosted setup, the web application has features that are not available when self-hosting (e.g. the garzaglue agent)
-- When doing local development on your self-hosted setup, you can customize the web application to your needs
+### Docker Compose
 
-**garzaglue SDK**
+```bash
+docker-compose up -d
+```
 
-- The garzaglue SDK offers CRUD functionality for all garzaglue data types and lets you execute tools programmatically
-- For more detailed information on SDK functionality, check our [SDK guide](https://docs.garzaglue.com/sdk/overview)
+---
 
-  Install via npm:
+## Deployment
 
-  ```bash
-    npm install @garzaglue/client
-  ```
+Currently deployed to:
+- **s1.garzaglue.com** — Production
+- **s2.garzaglue.com** — Staging
 
-  Client setup:
+Both run Docker containers built from this repo with Traefik reverse proxy for HTTPS.
 
-  ```javascript
-  // Typescript SDK
-  import { GarzaGlueClient } from "@garzaglue/client";
+### Environment Variables
 
-  const garzaglue = new GarzaGlueClient({
-    apiKey: "your_api_key_here", // Get from app.garzaglue.com
-  });
-  ```
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Postgres connection string |
+| `MASTER_ENCRYPTION_KEY` | Encrypts system credentials at rest |
+| `ENCRYPTION_KEY` | Secondary encryption key |
+| `AUTH_TOKEN` | API authentication token |
+| `GRAPHQL_PORT` | GraphQL server port (default: 3000) |
+| `WEB_PORT` | Web UI port (default: 3001) |
+| `REST_API_PORT` | REST API port (default: 3002) |
 
-**MCP Server**
+---
 
-- Look at our [MCP Guide](https://docs.garzaglue.com/mcp/using-the-mcp) for full installation instructions
-- The MCP interface gives you discoverability tools and execution capabilities for your pre-built garzaglue tools
-- The MCP does not support ad-hoc integration creation or tool building
-- Use MCP in production for agentic use cases and internal GPTs to access and execute pre-built tools with full control
+## Development Workflow
 
-## 📖 Documentation
+```bash
+npm run dev          # Start all services
+npm run test         # Run Vitest tests
+npm run lint:fix     # Prettier formatting
+npm run type-check   # TypeScript check
+npm run build        # Production build
+```
 
-For detailed documentation, visit [docs.garzaglue.com](https://docs.garzaglue.com).
+### Conventions
 
-## 🤝 Contributing
+- **Imports at top** — no inline imports
+- **Local imports use `.js` extension** — `import { x } from "./file.js"`
+- **Types in shared** — `packages/shared/types.ts`
+- **REST over GraphQL** — new endpoints go in `packages/core/api/`
+- **Error handling** — `sendError(reply, 404, "message")`
+- **Functional React** with TypeScript annotations
+- **shadcn/Radix UI** components in `packages/web/src/components/ui/`
+- **Tailwind** for styling, `cn()` for conditional classnames
 
-We love contributions! Before making contributions, we ask that all users read through our [contribution guide](https://github.com/superglue-ai/superglue/blob/main/CONTRIBUTING.md) and sign the Contributor License Agreement (CLA). When creating new issues or pull requests, please ensure compliance with the contribution guide.
+---
 
-[//]: # "To contribute to the docs, check out the /docs folder."
+## PWA Details
+
+The service worker (`public/sw.js`) uses:
+- **BUILD_ID cache versioning** — injected at Docker build time, auto-purges old caches on deploy
+- **CacheFirst**: Static assets (images, fonts, icons)
+- **StaleWhileRevalidate**: CSS/JS files
+- **NetworkFirst**: API calls with timeout, page navigations
+- **Offline fallback**: `/offline.html` for failed navigation requests
+- **Push notifications**: Support for agent task completion alerts
+- **Background sync**: Queue for offline chat messages
+
+---
+
+## Relationship to Upstream
+
+This repo tracks `superglue-ai/superglue` as upstream. To pull upstream changes:
+
+```bash
+git remote add upstream https://github.com/superglue-ai/superglue.git
+git fetch upstream main
+git merge upstream/main
+```
+
+Custom changes are isolated to:
+- `packages/core/api/ee/conversations.ts` (new file)
+- `packages/core/datastore/postgres.ts` (conversation CRUD methods)
+- `packages/core/datastore/types.ts` (Conversation type)
+- `packages/shared/types.ts` (Conversation interface)
+- `packages/web/` (branding, PWA, mobile fixes, new pages)
+- `docker/Dockerfile` (Deno installation, BUILD_ID injection)
+
+---
 
 ## License
 
-Garza Glue is FSL licensed. The garzaglue client SDKs are MIT licensed. See [LICENSE](LICENSE) for details.
-
-## Next Steps
-
-- [Join our Discord](https://discord.gg/vUKnuhHtfW)
-- [Read our docs](https://docs.garzaglue.com/)
-- [Talk to us](https://cal.com/garzaglue/garzaglue-demo)
-
-Text us! <br>
-[![Twitter Adina](https://img.shields.io/twitter/follow/adinagoerres?style=flat-square&logo=X)](https://twitter.com/adinagoerres)
-[![Twitter Stefan](https://img.shields.io/twitter/follow/sfaistenauer?style=flat-square&logo=X)](https://twitter.com/sfaistenauer)
-[![Twitter](https://img.shields.io/twitter/follow/garzaglue_d?style=social)](https://twitter.com/garzaglue_d)
+FSL licensed (same as upstream superglue). Client SDKs are MIT licensed.
