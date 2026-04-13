@@ -7,7 +7,7 @@ import { SystemIcon } from "@/src/components/ui/system-icon";
 import { cn, handleCopyCode } from "@/src/lib/general-utils";
 import { Message, ToolCall } from "@garzaglue/shared";
 import { AlertTriangle, ChevronDown, ChevronUp, Pencil, Plus, X } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import { Streamdown } from "streamdown";
 import { AgentCapabilities } from "./AgentCapabilities";
 import { AgentType } from "@/src/lib/agent/registries/agent-registry";
@@ -313,14 +313,58 @@ interface AgentInterfaceProps {
   } | null;
 }
 
+interface AgentErrorBoundaryState {
+  hasError: boolean;
+}
+
+class AgentErrorBoundary extends Component<{ children: React.ReactNode }, AgentErrorBoundaryState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): AgentErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
+          <AlertTriangle className="w-10 h-10 text-zinc-400" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Something went wrong</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              The chat encountered an error. Try refreshing the page.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+          >
+            Refresh
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function AgentInterface({ initialPrompts }: AgentInterfaceProps = {}) {
   return (
-    <AgentContextProvider initialPrompts={initialPrompts}>
-      <AgentInterfaceContent
-        chatTitle={initialPrompts?.chatTitle}
-        chatIcon={initialPrompts?.chatIcon}
-      />
-    </AgentContextProvider>
+    <AgentErrorBoundary>
+      <AgentContextProvider initialPrompts={initialPrompts}>
+        <AgentInterfaceContent
+          chatTitle={initialPrompts?.chatTitle}
+          chatIcon={initialPrompts?.chatIcon}
+        />
+      </AgentContextProvider>
+    </AgentErrorBoundary>
   );
 }
 
